@@ -59,6 +59,54 @@ void LogCallback(rtc::LogLevel level, std::string message) {
 	}
 }
 
+static String candidate_type_to_string(rtc::Candidate::Type p_type) {
+	switch (p_type) {
+		case rtc::Candidate::Type::Host:
+			return "host";
+		case rtc::Candidate::Type::ServerReflexive:
+			return "srflx";
+		case rtc::Candidate::Type::PeerReflexive:
+			return "prflx";
+		case rtc::Candidate::Type::Relayed:
+			return "relay";
+		default:
+			return "";
+	}
+}
+
+static String candidate_transport_to_string(rtc::Candidate::TransportType p_type) {
+	switch (p_type) {
+		case rtc::Candidate::TransportType::Udp:
+			return "udp";
+		case rtc::Candidate::TransportType::TcpActive:
+			return "tcp-active";
+		case rtc::Candidate::TransportType::TcpPassive:
+			return "tcp-passive";
+		case rtc::Candidate::TransportType::TcpSo:
+			return "tcp-so";
+		case rtc::Candidate::TransportType::TcpUnknown:
+			return "tcp";
+		default:
+			return "";
+	}
+}
+
+static Dictionary candidate_to_dictionary(const rtc::Candidate &p_candidate) {
+	Dictionary result;
+	result["candidate"] = String(p_candidate.candidate().c_str());
+	result["candidateType"] = candidate_type_to_string(p_candidate.type());
+	result["protocol"] = candidate_transport_to_string(p_candidate.transportType());
+	result["mid"] = String(p_candidate.mid().c_str());
+	result["priority"] = int64_t(p_candidate.priority());
+	if (p_candidate.address().has_value()) {
+		result["address"] = String(p_candidate.address().value().c_str());
+	}
+	if (p_candidate.port().has_value()) {
+		result["port"] = int64_t(p_candidate.port().value());
+	}
+	return result;
+}
+
 void WebRTCLibPeerConnection::initialize_signaling() {
 #ifdef DEBUG_ENABLED
 	rtc::InitLogger(rtc::LogLevel::Debug, LogCallback);
@@ -313,6 +361,28 @@ void WebRTCLibPeerConnection::_close() {
 	while (!signal_queue.empty()) {
 		signal_queue.pop();
 	}
+}
+
+Dictionary WebRTCLibPeerConnection::get_selected_candidate_pair() {
+	Dictionary result;
+	result["selected"] = false;
+	ERR_FAIL_COND_V(!peer_connection, result);
+
+	rtc::Candidate local;
+	rtc::Candidate remote;
+	if (!peer_connection->getSelectedCandidatePair(&local, &remote)) {
+		return result;
+	}
+
+	result["selected"] = true;
+	result["local"] = candidate_to_dictionary(local);
+	result["remote"] = candidate_to_dictionary(remote);
+	result["bytes_sent"] = int64_t(peer_connection->bytesSent());
+	result["bytes_received"] = int64_t(peer_connection->bytesReceived());
+	if (peer_connection->rtt().has_value()) {
+		result["rtt_msec"] = int64_t(peer_connection->rtt().value().count());
+	}
+	return result;
 }
 
 void WebRTCLibPeerConnection::_init() {

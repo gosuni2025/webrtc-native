@@ -41,6 +41,7 @@
 #endif
 #else
 #include <godot_cpp/core/binder_common.hpp>
+#include <godot_cpp/core/class_db.hpp>
 
 #include <godot_cpp/classes/global_constants_binds.hpp>
 #include <godot_cpp/classes/web_rtc_peer_connection_extension.hpp>
@@ -65,7 +66,11 @@ private:
 	godot::Error _parse_channel_config(rtc::DataChannelInit &r_config, const godot::Dictionary &p_dict);
 
 protected:
-	static void _bind_methods() {}
+	static void _bind_methods() {
+#ifndef GDNATIVE_WEBRTC
+		godot::ClassDB::bind_method(godot::D_METHOD("get_selected_candidate_pair"), &WebRTCLibPeerConnection::get_selected_candidate_pair);
+#endif
+	}
 
 	godot::String _to_string() const {
 		return "WebRTCLibPeerConnection";
@@ -98,6 +103,8 @@ public:
 #endif
 	godot::Error _poll() override;
 	void _close() override;
+
+	godot::Dictionary get_selected_candidate_pair();
 
 	WebRTCLibPeerConnection();
 	~WebRTCLibPeerConnection();

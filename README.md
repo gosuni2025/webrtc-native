@@ -5,6 +5,16 @@
 | **Download latest binary version** | [**GitHub**](https://github.com/godotengine/webrtc-native/releases) |
 | --- | --- |
 
+## Custom selected candidate pair build
+
+This fork exposes `WebRTCPeerConnection.get_selected_candidate_pair()` for Godot 4 GDExtension builds. The method returns a `Dictionary` with:
+
+- `selected`: `true` when libdatachannel has a selected ICE candidate pair.
+- `local` / `remote`: candidate dictionaries containing `candidateType`, `protocol`, `mid`, `priority`, `address`, and `port` when available.
+- `bytes_sent`, `bytes_received`, and `rtt_msec` when libdatachannel reports them.
+
+The `selected-candidate-pair` branch also includes a macOS universal GDExtension build under `bin/extension/webrtc/`.
+
 ### Compiling
 
 Clone this repository with the following command to checkout all the dependencies: [godot-cpp](https://github.com/godotengine/godot-cpp), [mbedTLS](https://github.com/Mbed-TLS/mbedtls) and [libdatachannel](https://github.com/paullouisageneau/libdatachannel) (and sub-dependencies).
